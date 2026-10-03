@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Визуальная новелла</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    font-family: "VT323", "Courier New", monospace;
+    background: #000; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+  }
+  #game {
+    position: relative; width: 100vw; height: 100vh;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  #background {
+    position: absolute; inset: 0;
+    background: url("location1.jpg") center/cover no-repeat;
+    background-color: #1a1a1a;
+    transition: background-image 0.4s ease-in-out, background-color 0.4s ease-in-out;
+  }
+
+  /* ============ ДИАЛОГОВОЕ ОКНО ============ */
+  #dialogue-box {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    width: 65%;
+    max-width: 900px;
+    min-height: 150px;
+    padding: 20px 24px 20px 16px;
+    background: rgba(0, 0, 0, 0.88);
+    border: 2px solid #4ade80;
+    border-radius: 3px;
+    color: #fff;
+    font-size: 34px;
+    line-height: 1.25;
+    letter-spacing: 1px;
+    text-align: left;
+  }
+  #speaker {
+    color: #4ade80;
+    font-weight: 400;
+    margin-bottom: 8px;
+    font-size: 32px;
+    letter-spacing: 2px;
+    text-align: left;
+    text-shadow: 2px 2px 0 #000;
+  }
+  #text {
+    white-space: pre-line;
+    text-align: left;
+    text-shadow: 2px 2px 0 #000;
+  }
+  #hint {
+    position: absolute; right: 18px; bottom: 10px;
+    font-size: 22px; color: rgba(74, 222, 128, 0.75);
+    letter-spacing: 1px;
+    animation: blink 1.4s infinite;
+    text-shadow: 1px 1px 0 #000;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 1; }
+  }
+
+  /* ============ ВАРИАНТЫ ОТВЕТА ============ */
+  #choices {
+    position: absolute;
+    bottom: 40px;
+    left: 24px;
+    width: 65%;
+    max-width: 900px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .choice {
+    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid rgba(74, 222, 128, 0.5);
+    border-radius: 3px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 30px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    text-align: left;
+    text-shadow: 2px 2px 0 #000;
+    touch-action: manipulation;
+  }
+  .choice:hover,
+  .choice:active {
+    background: rgba(74, 222, 128, 0.18);
+    border-color: #4ade80;
+    transform: translateX(4px);
+  }
+
+  /* ============ КНОПКА "ИДТИ ДАЛЬШЕ" ============ */
+  .next-btn {
+    align-self: flex-start;
+    padding: 16px 56px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid #4ade80;
+    border-radius: 3px;
+    color: #4ade80;
+    font-family: inherit;
+    font-size: 32px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.1s;
+    text-align: center;
+    text-shadow: 2px 2px 0 #000;
+    touch-action: manipulation;
+  }
+  .next-btn:hover,
+  .next-btn:active {
+    background: #4ade80;
+    color: #000;
+    transform: scale(1.04);
+    text-shadow: none;
+  }
+
+  /* ============ ФОРМА ВВОДА ============ */
+  #input-area {
+    position: absolute;
+    bottom: 40px;
+    left: 24px;
+    width: 65%;
+    max-width: 620px;
+    padding: 24px 24px 24px 16px;
+    background: rgba(0, 0, 0, 0.92);
+    border: 2px solid #4ade80;
+    border-radius: 3px;
+    color: #fff;
+    display: flex; flex-direction: column; gap: 16px;
+    cursor: default;
+    font-family: inherit;
+    text-align: left;
+  }
+  #input-area label {
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 28px;
+    color: #4ade80;
+    letter-spacing: 1px;
+    text-align: left;
+    text-shadow: 2px 2px 0 #000;
+  }
+  #input-area input {
+    padding: 10px 14px;
+    font-size: 28px;
+    font-family: inherit;
+    letter-spacing: 1px;
+    border: 2px solid rgba(74, 222, 128, 0.5);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    outline: none;
+  }
+  #input-area input:focus {
+    border-color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+  }
+  #submit-info {
+    margin-top: 6px;
+    padding: 14px 24px;
+    font-size: 30px;
+    font-family: inherit;
+    letter-spacing: 2px;
+    background: rgba(74, 222, 128, 0.18);
+    border: 2px solid #4ade80;
+    border-radius: 3px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-shadow: 2px 2px 0 #000;
+    touch-action: manipulation;
+  }
+  #submit-info:hover,
+  #submit-info:active {
+    background: #4ade80;
+    color: #000;
+    text-shadow: none;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ===================================================== */
+  /* ============ АДАПТАЦИЯ ПОД ПЛАНШЕТЫ (<=900px) ======= */
+  /* ===================================================== */
+  @media (max-width: 900px) {
+    #dialogue-box {
+      top: 16px; left: 16px;
+      width: 80%;
+      min-height: 120px;
+      padding: 16px 18px 16px 14px;
+      font-size: 28px;
+    }
+    #speaker { font-size: 26px; }
+    #hint { font-size: 18px; right: 12px; bottom: 8px; }
+
+    #choices {
+      bottom: 24px; left: 16px;
+      width: 80%;
+      gap: 10px;
+    }
+    .choice { font-size: 24px; padding: 14px 16px; }
+    .next-btn { font-size: 26px; padding: 14px 40px; letter-spacing: 2px; }
+
+    #input-area {
+      bottom: 24px; left: 16px;
+      width: 80%;
+      padding: 18px 18px 18px 14px;
+      gap: 12px;
+    }
+    #input-area label { font-size: 24px; }
+    #input-area input { font-size: 22px; padding: 8px 12px; }
+    #submit-info { font-size: 26px; padding: 12px 20px; }
+  }
+
+  /* ===================================================== */
+  /* ============ АДАПТАЦИЯ ПОД ТЕЛЕФОНЫ (<=600px) ======= */
+  /* ===================================================== */
+  @media (max-width: 600px) {
+    #dialogue-box {
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      width: auto;
+      max-width: none;
+      min-height: 100px;
+      padding: 12px 14px 12px 10px;
+      font-size: 20px;
+      line-height: 1.3;
+      border-width: 2px;
+    }
+    #speaker {
+      font-size: 19px;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+    #hint {
+      font-size: 14px;
+      right: 8px;
+      bottom: 6px;
+    }
+
+    #choices {
+      bottom: 12px;
+      left: 8px;
+      right: 8px;
+      width: auto;
+      max-width: none;
+      gap: 8px;
+    }
+    .choice {
+      font-size: 18px;
+      padding: 12px 14px;
+      letter-spacing: 0;
+      line-height: 1.3;
+    }
+    .choice:hover,
+    .choice:active { transform: none; }
+
+    .next-btn {
+      align-self: stretch;     /* на телефоне — на всю ширину, удобно тапать */
+      font-size: 20px;
+      padding: 14px 20px;
+      letter-spacing: 2px;
+      width: 100%;
+    }
+
+    #input-area {
+      bottom: 12px;
+      left: 8px;
+      right: 8px;
+      width: auto;
+      max-width: none;
+      padding: 14px 14px 14px 10px;
+      gap: 10px;
+    }
+    #input-area label {
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+    #input-area input {
+      font-size: 18px;     /* >=16px — iOS не зумит при фокусе */
+      padding: 8px 10px;
+    }
+    #submit-info {
+      font-size: 20px;
+      padding: 12px 16px;
+      letter-spacing: 1px;
+    }
+  }
+
+  /* ===================================================== */
+  /* ====== АЛЬБОМНАЯ ОРИЕНТАЦИЯ НА ТЕЛЕФОНЕ ============= */
+  /* ===================================================== */
+  @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+    #dialogue-box {
+      top: 6px; left: 6px;
+      width: 70%;
+      min-height: 80px;
+      padding: 8px 12px 8px 10px;
+      font-size: 18px;
+    }
+    #speaker { font-size: 17px; margin-bottom: 4px; }
+    #hint { display: none; }
+
+    #choices {
+      bottom: 6px; left: 6px;
+      width: 70%;
+      gap: 6px;
+    }
+    .choice { font-size: 16px; padding: 8px 10px; }
+    .next-btn { font-size: 18px; padding: 10px 24px; }
+
+    #input-area {
+      bottom: 6px; left: 6px;
+      width: 70%;
+      padding: 10px 12px;
+      gap: 6px;
+    }
+    #input-area label { font-size: 16px; }
+    #input-area input { font-size: 16px; padding: 6px 8px; }
+    #submit-info { font-size: 18px; padding: 8px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <div id="background"></div>
+
+  <div id="dialogue-box" class="hidden">
+    <div id="speaker"></div>
+    <div id="text"></div>
+    <div id="hint">▼ ПРОБЕЛ / ЛКМ</div>
+  </div>
+
+  <div id="choices" class="hidden"></div>
+
+  <div id="input-area" class="hidden">
+    <label>ИМЯ:
+      <input type="text" id="in-name" maxlength="30" autocomplete="off">
+    </label>
+    <label>ФАМИЛИЯ:
+      <input type="text" id="in-surname" maxlength="30" autocomplete="off">
+    </label>
+    <label>КЛАСС:
+      <input type="text" id="in-class" maxlength="10" autocomplete="off">
+    </label>
+    <button id="submit-info">ГОТОВО</button>
+  </div>
+</div>
+
+<script>
+/* ---------- ДАННЫЕ ИГРОКА ---------- */
+const playerInfo = { name: "", surname: "", cls: "" };
+
+/* ---------- ГРАФ СЦЕНАРИЯ ---------- */
+const nodes = {
+  start: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: "-Ты чего тут ошиваешься! Школа уже как 5 часов закрыта!",
+    next: "choice1"
+  },
+
+  choice1: {
+    type: "choices",
+    options: [
+      { text: "Я случайно заснул в раздевалке, уже иду домой", next: "sleepLine1" },
+      { text: "Какая тебе разница, что я тут делаю, вали отсюда", next: "rudeLine1" }
+    ]
+  },
+
+  sleepLine1: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: "Вот в СССР мы не засыпали, а еще делали дз, а вы тикитокеры... тьфу...",
+    next: "sleepLine2"
+  },
+  sleepLine2: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: "Ну ладно, я пошла домой и ты тоже бегом домой, а то уже ночь. ух... что то я сильно задержалась сегодня...",
+    next: "nightEnd"
+  },
+  nightEnd: {
+    type: "line",
+    speaker: "",
+    text: "Татьяна Евгеньевна уходит в темноту коридора. Ты остаёшься один.",
+    bg: "location1(1).jpg",
+    next: null,
+    button: { text: "ИДТИ ДАЛЬШЕ", next: "afterNight" }
+  },
+  afterNight: {
+    type: "line",
+    speaker: "",
+    text: "(Продолжение следует...)",
+    next: null
+  },
+
+  rudeLine1: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: "ТЫ ЧТО ТАКОЕ ГОВОРИШЬ!? СЕЙЧАС К ЛИДИИ ПЕТРОВНЕ ПОЙДЕМ!",
+    next: "rudeLine2"
+  },
+  rudeLine2: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: "Точно... Лидия Петровна же уже ушла... ТОГДА ГОВОРИ СВОЕ ИМЯ И ФАМИЛИЮ И КЛАСС!",
+    next: "choice2"
+  },
+  choice2: {
+    type: "choices",
+    options: [
+      { text: "Сказать своё настоящее имя, фамилию и класс", next: "inputPlayerInfo" },
+      { text: "Соврать — Иванов Ваня Лысикович 8Е", next: "lieResponse" }
+    ]
+  },
+  inputPlayerInfo: {
+    type: "input",
+    next: "afterInputResponse"
+  },
+
+  afterInputResponse: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: () => `Так-так... ${playerInfo.surname} ${playerInfo.name}, ${playerInfo.cls}... Запомнила. Иди домой и больше не задерживайся. Я пошла домой и ты тоже!`,
+    next: "afterInputResponseAdvance"
+  },
+
+  afterInputResponseAdvance: {
+    type: "line",
+    bg: "location1(1).jpg",
+    next: null,
+    button: { text: "ИДТИ ДАЛЬШЕ", next: "monologue1" }
+  },
+
+  monologue1: {
+    type: "line",
+    speaker: "Вы",
+    text: "Как надоела эта школа, эти ебаные учителя... просто уже бесит... Ну хоть у Бескина все хорошо.",
+    bg: "black",
+    next: "wakeUp"
+  },
+
+  wakeUp: {
+    type: "line",
+    speaker: "",
+    text: "(вы проснулись у себя дома...)",
+    next: null
+  },
+
+  lieResponse: {
+    type: "line",
+    speaker: "Татьяна Евгеньевна",
+    text: "Иванов Ваня... Лысикович... 8Е... Хм, что-то я такого не помню. Ладно, иди уже.",
+    next: null
+  }
+};
+
+/* ---------- ЭЛЕМЕНТЫ ---------- */
+const dialogueBox = document.getElementById("dialogue-box");
+const speakerEl   = document.getElementById("speaker");
+const textEl      = document.getElementById("text");
+const hintEl      = document.getElementById("hint");
+const choicesEl   = document.getElementById("choices");
+const inputArea   = document.getElementById("input-area");
+const bgEl        = document.getElementById("background");
+const gameEl      = document.getElementById("game");
+
+const inName    = document.getElementById("in-name");
+const inSurname = document.getElementById("in-surname");
+const inClass   = document.getElementById("in-class");
+
+/* ---------- СОСТОЯНИЕ ---------- */
+let currentId   = "start";
+let state       = "line";
+let pendingNext = null;
+
+/* ---------- ФОН ---------- */
+function setBackground(file) {
+  if (!file) return;
+  if (file === "black") {
+    bgEl.style.backgroundImage = "none";
+    bgEl.style.backgroundColor = "#000";
+    return;
+  }
+  bgEl.style.backgroundImage = `url("${file}")`;
+  bgEl.style.backgroundColor = "#1a1a1a";
+}
+
+/* ---------- РЕНДЕР ---------- */
+function render() {
+  const node = nodes[currentId];
+
+  if (!node) {
+    state = "end";
+    dialogueBox.classList.add("hidden");
+    choicesEl.classList.add("hidden");
+    inputArea.classList.add("hidden");
+    return;
+  }
+
+  if (node.bg) setBackground(node.bg);
+
+  if (node.type === "line") {
+    state = "line";
+    pendingNext = node.next ?? null;
+
+    inputArea.classList.add("hidden");
+
+    if (node.text !== undefined && node.text !== null) {
+      dialogueBox.classList.remove("hidden");
+      speakerEl.textContent = node.speaker ? node.speaker + ":" : "";
+      textEl.textContent = (typeof node.text === "function") ? node.text() : node.text;
+    } else {
+      dialogueBox.classList.add("hidden");
+    }
+
+    if (node.button) {
+      hintEl.classList.add("hidden");
+      choicesEl.classList.remove("hidden");
+      choicesEl.innerHTML = "";
+
+      const btn = document.createElement("div");
+      btn.className = "next-btn";
+      btn.textContent = node.button.text;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        goTo(node.button.next);
+      });
+      choicesEl.appendChild(btn);
+    } else {
+      if (node.text !== undefined && node.text !== null) {
+        hintEl.classList.remove("hidden");
+      } else {
+        hintEl.classList.add("hidden");
+      }
+      choicesEl.classList.add("hidden");
+    }
+  }
+  else if (node.type === "choices") {
+    state = "choices";
+
+    dialogueBox.classList.remove("hidden");
+    hintEl.classList.add("hidden");
+
+    inputArea.classList.add("hidden");
+    choicesEl.classList.remove("hidden");
+    choicesEl.innerHTML = "";
+
+    node.options.forEach(opt => {
+      const btn = document.createElement("div");
+      btn.className = "choice";
+      btn.textContent = opt.text;
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        goTo(opt.next);
+      });
+      choicesEl.appendChild(btn);
+    });
+  }
+  else if (node.type === "input") {
+    state = "input";
+    pendingNext = node.next ?? null;
+
+    dialogueBox.classList.remove("hidden");
+    hintEl.classList.add("hidden");
+
+    choicesEl.classList.add("hidden");
+    inputArea.classList.remove("hidden");
+
+    inName.value = "";
+    inSurname.value = "";
+    inClass.value = "";
+    setTimeout(() => inName.focus(), 50);
+  }
+}
+
+/* ---------- ПЕРЕХОДЫ ---------- */
+function goTo(id) {
+  currentId = id;
+  render();
+}
+
+function advance() {
+  if (state !== "line") return;
+  const node = nodes[currentId];
+  if (node && node.button) return;
+
+  if (pendingNext === null || pendingNext === undefined) {
+    currentId = null;
+    render();
+    return;
+  }
+  goTo(pendingNext);
+}
+
+/* ---------- ОБРАБОТЧИКИ ---------- */
+gameEl.addEventListener("click", advance);
+
+window.addEventListener("keydown", (e) => {
+  if (state === "input") return;
+  if (e.code === "Space") { e.preventDefault(); advance(); }
+});
+
+document.getElementById("submit-info").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const n = inName.value.trim();
+  const s = inSurname.value.trim();
+  const c = inClass.value.trim();
+  if (!n || !s || !c) {
+    alert("Заполни все поля: имя, фамилию и класс!");
+    return;
+  }
+  playerInfo.name    = n;
+  playerInfo.surname = s;
+  playerInfo.cls     = c;
+
+  if (pendingNext) {
+    goTo(pendingNext);
+  } else {
+    currentId = null;
+    render();
+  }
+});
+
+[inName, inSurname, inClass].forEach(inp => {
+  inp.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("submit-info").click();
+    }
+  });
+});
+
+/* ---------- СТАРТ ---------- */
+render();
+</script>
+</body>
+</html>
